@@ -25,7 +25,8 @@ MCPJungle/
     │   ├── sysctl.ico              # ARP / shortcut icon (Admin Console)
     │   └── user.ico                # ARP / shortcut icon (User)
     └── config/
-        └── mcpjungle.conf          # Default config
+        ├── mcpjungle.db            # Default sqlite datable
+        └── .mcpjungle.conf         # Default CLI conf
 ```
 
 ---
