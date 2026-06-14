@@ -389,26 +389,9 @@
 		</DirectoryRef>
 	</Fragment>
     <!-- ── Configuration component ──────────────────────────── -->
-    <?if $(BuildType) = "User" ?>
-	<Fragment>
-		<DirectoryRef Id="UserProfileFolder">
-			<Component Id="McpJungleConfFile"
-			           Guid="CE7D9F8B-4D7A-4545-A041-68BDC26C0C16"
-			           NeverOverwrite="yes">
-                <File Id="McpJungleConf"
-				      Name=".mcpjungle.conf"
-				      Source="$(ConfigDir)\.mcpjungle.conf" 
-                      KeyPath="yes" />
-			</Component>
-		</DirectoryRef>
-	</Fragment>
-    <?endif ?>
 	<Fragment>
 		<ComponentGroup Id="ConfigComponents">
 			<ComponentRef Id="MCPJungleSqliteDB"/>
-            <?if $(BuildType) = "User" ?>
-            <ComponentRef Id="McpJungleConfFile"/>
-            <?endif ?>
 		</ComponentGroup>
 	</Fragment>
 </Wix>
