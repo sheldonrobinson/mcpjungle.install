@@ -1,0 +1,414 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+	<Package Name="MCPJungle"
+	         Language="1033"
+	         Version="$(ProductVersion)"
+	         Manufacturer="Konnek Inc"
+	         UpgradeCode="E5D66596-50FA-4E83-9CF7-13832790F01C"
+	         Scope="$(Scope)"
+	         InstallerVersion="500"
+	         Compressed="yes">
+		<MediaTemplate EmbedCab="yes"
+		               CompressionLevel="high"/>
+		<Property Id="ARPPRODUCTICON"
+		          Value="McpJungleIcon"/>
+		<Property Id="ARPHELPLINK"
+		          Value="https://docs.mcpjungle.com/"/>
+		<Property Id="ARPURLINFOABOUT"
+		          Value="https://github.com/mcpjungle/mcpjungle"/>
+		<Property Id="WIXUI_INSTALLDIR"
+		          Value="INSTALLFOLDER"/>
+		<Property Id="INSTALLFOLDER"
+		          Secure="yes">
+		<?if $(var.BuildType) = "Machine" ?>
+			<RegistrySearch Id="InstallFolderSearch"
+			                Root="HKLM"
+			                Key="SOFTWARE\Konnek\mcpjungle"
+			                Name="InstallPath"
+			                Type="raw"/>
+		<?else ?>
+			<RegistrySearch Id="InstallFolderSearch"
+			                Root="HKLM"
+			                Key="SOFTWARE\Konnek\mcpjungle"
+			                Name="InstallPath"
+			                Type="raw"/>
+		<?endif ?>
+		</Property>
+		<!-- ================================================================
+         Upgrade logic
+           - MajorUpgrade handles removal of the old MSI before
+             new files are placed (Schedule=afterInstallInitialize).
+           - AllowSameVersionUpgrades=no blocks same-version reinstalls.
+           - Downgrades are blocked with a user-facing error.
+        ================================================================ -->
+		<MajorUpgrade DowngradeErrorMessage="A newer version of MCPJungle is already installed. Setup will now exit."
+		              Schedule="afterInstallInitialize"
+		              AllowSameVersionUpgrades="no"/>
+                      
+		<!-- ================================================================
+         Features
+        ================================================================ -->
+		<Feature Id="ProductFeature"
+		         Title="MCPJungle"
+		         Description="Installs MCPJungle and all required components."
+		         Level="1"
+		         ConfigurableDirectory="INSTALLFOLDER">
+			<ComponentGroupRef Id="ProductComponents"/>
+			<ComponentGroupRef Id="StartMenuComponents"/>
+			<ComponentGroupRef Id="ConfigComponents"/>
+		</Feature>
+		<!-- ================================================================
+         UI
+         When built with -dSILENT=1 (build.ps1 -Silent), WixUI_Minimal
+         is used so no dialogs appear. Otherwise the custom three-step
+         AgentGatewayUI sequence is shown.
+        ================================================================ -->
+		<!-- Use ui:WixUI instead of UIRef -->
+		<ui:WixUI Id="WixUI_Minimal"/>
+		<WixVariable Id="WixUILicenseRtf"
+		             Value="$(LicenseFile)"/>
+		<WixVariable Id="WixUIBannerBmp"
+		             Value="$(BitmapDir)\banner.bmp"/>
+		<WixVariable Id="WixUIDialogBmp"
+		             Value="$(BitmapDir)\dialog.bmp"/>
+	<?if $(BuildType) = "PowerUser" ?>
+		<!-- Per-user scheduled task -->
+		<CustomAction Id="MCPJungleTask_Create_PU"
+		              Directory="System64Folder"
+		              ExeCommand='schtasks.exe /Create /F /TN "MCPJungle Gateway" /TR "\"[INSTALLFOLDER]mcpjungle.exe\" start --port 9000" /SC ONLOGON'
+		              Execute="deferred"
+		              Return="check"
+		              Impersonate="yes"/>
+		<CustomAction Id="MCPJungleTask_Remove_PU"
+		              Directory="System64Folder"
+		              ExeCommand='schtasks.exe /Delete /F /TN "MCPJungle Gateway"'
+		              Execute="deferred"
+		              Return="ignore"
+		              Impersonate="yes"/>
+		<InstallExecuteSequence>
+			<Custom Action="MCPJungleTask_Create_PU"
+			        After="InstallFiles"
+			        Condition="NOT Installed OR REINSTALL"/>
+			<Custom Action="MCPJungleTask_Remove_PU"
+			        Before="RemoveFiles"
+			        Condition="REMOVE~=&quot;ALL&quot; AND NOT UPGRADINGPRODUCTCODE"/>
+		</InstallExecuteSequence>
+	<?endif ?>
+	</Package>
+	<Fragment>
+	<?if $(BuildType) = "Machine" ?>
+		<!-- %PROGRAMFILES%\ -->
+		<Directory Id="ProgramFiles64Folder">
+			<Directory Id="KonnekFolder"
+			           Name="Konnek">
+				<Directory Id="INSTALLFOLDER"
+				           Name="mcpjungle"/>
+			</Directory>
+		</Directory>
+		<!-- %PROGRAMDATA%\Microsoft\Windows\Start Menu\Programs\ -->
+		<Directory Id="ProgramMenuFolder">
+			<Directory Id="KonnekStartMenuDir"
+			           Name="Konnek"/>
+		</Directory>
+		<!-- %PROGRAMDATA%\Konnek\agentgateway\ – config file for the installing user -->
+		<Directory Id="CommonAppDataFolder">
+			<Directory Id="AppDataKonnek"
+			           Name="Konnek">
+				<Directory Id="AppDataMCPJungle"
+				           Name="mcpjungle"/>
+			</Directory>
+		</Directory>
+	<?else?>
+		<!-- %LOCALAPPDATA%\Programs\ -->
+		<Directory Id="LocalAppDataFolder">
+			<Directory Id="LocalPrograms"
+			           Name="Programs">
+				<Directory Id="KonnekFolder"
+				           Name="Konnek">
+					<Directory Id="INSTALLFOLDER"
+					           Name="mcpjungle"/>
+				</Directory>
+			</Directory>
+		</Directory>
+		<!-- Per-user Start Menu: %APPDATA%\Microsoft\Windows\Start Menu\Programs\ -->
+		<Directory Id="AppDataFolder">
+			<!-- existing – Start Menu -->
+			<Directory Id="AppDataMicrosoft"
+			           Name="Microsoft">
+				<Directory Id="AppDataWindows"
+				           Name="Windows">
+					<Directory Id="AppDataStartMenu"
+					           Name="Start Menu">
+						<Directory Id="AppDataPrograms"
+						           Name="Programs">
+							<Directory Id="KonnekStartMenuDir"
+							           Name="Konnek"/>
+						</Directory>
+					</Directory>
+				</Directory>
+			</Directory>
+			<!-- ADD – %APPDATA%\Konnek\agentgateway\ for config file -->
+			<Directory Id="AppDataKonnek"
+			           Name="Konnek">
+				<Directory Id="AppDataMCPJungle"
+				           Name="mcpjungle"/>
+			</Directory>
+		</Directory>
+	<?endif?>
+        <Directory Id="UserProfileFolder" Name="." />
+	</Fragment>
+	<!-- ================================================================
+       Directory tree  (structure defined in Directory.wxi)
+     ================================================================ -->
+	<!-- ── Main application files ──────────────────────────────────── -->
+	<!-- APP icon -->
+	<Fragment>
+		<Icon Id="McpJungleIcon"
+		      SourceFile="$(IconDir)\mcpjungle.ico"/>
+		<Icon Id="HelpIcon"
+		      SourceFile="$(IconDir)\help.ico"/>
+		<Icon Id="InfoIcon"
+		      SourceFile="$(IconDir)\info.ico"/>
+		<Icon Id="StartIcon"
+		      SourceFile="$(IconDir)\start.ico"/>
+		<Icon Id="StopIcon"
+		      SourceFile="$(IconDir)\stop.ico"/>
+		<Icon Id="SysCtlIcon"
+		      SourceFile="$(IconDir)\sysctl.ico"/>
+		<Icon Id="UninstallIcon"
+		      SourceFile="$(IconDir)\uninstall.ico"/>
+		<Icon Id="UserIcon"
+		      SourceFile="$(IconDir)\user.ico"/>
+	</Fragment>
+	<Fragment>
+		<DirectoryRef Id="INSTALLFOLDER">
+			<Component Id="McpJungleExe"
+			           Guid="EEC148A1-A01D-4783-89DA-3F070EC173D4">
+				<File Id="McpJungle_exe"
+				      Name="mcpjungle.exe"
+				      Source="$(SourceDir)\mcpjungle.exe"
+				      KeyPath="yes"
+				      Checksum="yes"/>
+               <File Id="README_md"
+				      Name="README.md"
+				      Source="$(SourceDir)\README.md"
+				      Checksum="yes"/>
+               <File Id="LICENSE_File"
+				      Name="LICENSE"
+				      Source="$(SourceDir)\LICENSE"
+				      Checksum="yes"/>
+			</Component>
+			<Component Id="RegistryEntry"
+			           Guid="FBB2DDBD-CF8A-4AD7-922B-6F299D4DDA70">
+				<?if $(BuildType) = "System" ?>
+				<RegistryKey Root="HKLM"
+				             Key="SOFTWARE\Konnek\mcpjungle"
+				             ForceDeleteOnUninstall="yes">
+					<RegistryValue Name="InstallPath"
+					               Type="string"
+					               Value="[INSTALLFOLDER]"
+					               KeyPath="yes"/>
+					<RegistryValue Name="Version"
+					               Type="string"
+					               Value="$(ProductVersion)"/>
+				</RegistryKey>
+				<?else ?>
+				<RegistryKey Root="HKCU"
+				             Key="SOFTWARE\Konnek\mcpjungle"
+				             ForceDeleteOnUninstall="yes">
+					<RegistryValue Name="InstallPath"
+					               Type="string"
+					               Value="[INSTALLFOLDER]"
+					               KeyPath="yes"/>
+					<RegistryValue Name="Version"
+					               Type="string"
+					               Value="$(ProductVersion)"/>
+				</RegistryKey>
+			<?endif ?>
+			</Component>
+			<?if $(BuildType) = "System" ?>
+			<Component Id="MCPJungleService"
+			           Guid="EE88CC16-4866-468F-B787-26CEE799F4C9">
+				<!-- Install the service -->
+				<ServiceInstall Id="MCPJungleServiceInstaller"
+				                Name="mcpjungle"
+				                DisplayName="MCPJungle Background Service"
+				                Description="Runs MCPJungle in background mode"
+				                Type="ownProcess"
+				                Start="auto"
+                                Arguments="start --port 9000 --sqlite-db-path [AppDataMCPJungle]mcpjungle.db"
+				                ErrorControl="normal"
+				                Account="LocalSystem">
+					<util:ServiceConfig FirstFailureActionType="restart"
+					                    SecondFailureActionType="restart"
+					                    ThirdFailureActionType="restart"/>
+				</ServiceInstall>
+				<!-- Control service behavior during install/uninstall -->
+				<ServiceControl Id="MCPJungleServiceControl"
+				                Name="mcpjungle"
+				                Start="install"
+				                Stop="both"
+				                Remove="uninstall"
+				                Wait="yes"/>
+				<!-- Registry key for the service -->
+				<RegistryKey Root="HKLM"
+				             Key="SYSTEM\CurrentControlSet\Services\mcpjungle">
+					<RegistryValue Name="StartupServiceInstalled"
+					               Type="integer"
+					               Value="1"
+					               KeyPath="yes"/>
+					<RegistryValue Name="InstallPath"
+					               Type="string"
+					               Value="[INSTALLFOLDER]"/>
+					<RegistryValue Name="Version"
+					               Type="string"
+					               Value="$(ProductVersion)"/>
+				</RegistryKey>
+			</Component>
+			<?endif ?>
+		</DirectoryRef>
+	</Fragment>
+	<Fragment>
+		<ComponentGroup Id="ProductComponents">
+			<ComponentRef Id="McpJungleExe"/>
+			<ComponentRef Id="RegistryEntry"/>
+			<?if $(BuildType) = "System" ?>
+			<ComponentRef Id="MCPJungleService"/>
+			<?endif ?>
+		</ComponentGroup>
+	</Fragment>
+	<!-- ── Start Menu shortcuts ─────────────────────────────────────── -->
+	<Fragment>
+		<DirectoryRef Id="KonnekStartMenuDir">
+			<Component Id="StartMenuShortcuts"
+			           Guid="84FC8DEA-EBA7-409E-8075-1CA5E7657C91">
+				<util:InternetShortcut Id="WebsiteStartMenuShortcut"
+				                       Name="MCPJungle Admin UI"
+				                       Target="http://localhost:9000/"
+				                       Type="url" />
+				<?if $(BuildType) = "System" ?>
+				<!-- Start LLM Proxy startmenu shortcut -->
+				<Shortcut Id="StartServiceStartMenuShortcut"
+				          Name="MCPJungle Gateway (Administrator)"
+				          Description="Start MCPJungle Gateway Service"
+				          Target="[System64Folder]sc.exe start mcpjungle"
+				          WorkingDirectory="INSTALLFOLDER"
+						  Icon="StartIcon"
+						  IconIndex="0"/>
+				<!-- Stop LLM Proxy startmenu shortcut -->
+				<Shortcut Id="StopServiceStartMenuShortcut"
+				          Name="Stop MCPJungle Gateway (Administrator)"
+				          Description="Stop MCPJungle Gateway Service"
+				          Target="[System64Folder]sc.exe stop mcpjungle"
+				          WorkingDirectory="INSTALLFOLDER"
+						  Icon="StopIcon"
+						  IconIndex="0"/>
+				<?elseif $(BuildType) = "PowerUser" ?>
+				<Shortcut Id="StartServiceStartMenuShortcut"
+				          Name="MCPJungle Gateway"
+				          Description="Start MCPJungle Gateway"
+				          Target="[System64Folder]schtasks.exe"
+				          Arguments="/Run /TN &quot;MCPJungle Gateway&quot;"
+				          WorkingDirectory="INSTALLFOLDER"
+				          Icon="StartIcon"
+						  IconIndex="0"/>
+				<Shortcut Id="StopServiceStartMenuShortcut"
+				          Name="Stop MCPJungle Gateway"
+				          Description="Stop MCPJungle Gateway"
+				          Target="[System64Folder]schtasks.exe"
+				          Arguments="/End /TN &quot;MCPJungle Gateway&quot;"
+				          WorkingDirectory="INSTALLFOLDER"
+				          Icon="StopIcon"
+						  IconIndex="0"/>
+						  <?else ?>
+				<Shortcut Id="StartServiceStartMenuShortcut"
+				          Name="MCPJungle Gateway"
+				          Description="Launch MCPJungle Gateway"
+				          Target="[System64Folder]cmd.exe"
+                          Arguments="/k [INSTALLFOLDER]mcpjungle.exe start --port 9000 --sqlite-db-path [AppDataMCPJungle]mcpjungle.db"
+				          WorkingDirectory="INSTALLFOLDER"
+				          Icon="McpJungleIcon" 
+						  IconIndex="0" />	  
+				<?endif ?>
+				<util:InternetShortcut Id="MCPJungleDocsStartMenuShortcut"
+				                       Name="MCPJungle Docs"
+				                       Target="https://docs.mcpjungle.com/"
+				                       Type="url" />
+				<Shortcut Id="MCPJungleUninstallShortcut"
+				          Name="Uninstall MCPJungle"
+				          Description="Remove MCPJungle from this computer"
+				          Target="[SystemFolder]msiexec.exe"
+				          Arguments="/x [ProductCode]"
+						  Icon="UninstallIcon"
+						  IconIndex="0"/>
+				<RemoveFolder Id="CleanUpShortCuts"
+				              Directory="KonnekStartMenuDir"
+				              On="uninstall"/>
+				<?if $(BuildType) = "Machine" ?>
+				<RegistryValue Root="HKLM"
+				               Key="SOFTWARE\Konnek\mcpjungle\StartMenu"
+				               Name="installed"
+				               Type="integer"
+				               Value="1"
+				               KeyPath="yes"/>
+				<?else ?>
+				<RegistryValue Root="HKCU"
+				               Key="SOFTWARE\Konnek\mcpjungle\StartMenu"
+				               Name="installed"
+				               Type="integer"
+				               Value="1"
+				               KeyPath="yes"/>
+				<?endif ?>
+			</Component>
+		</DirectoryRef>
+	</Fragment>
+	<Fragment>
+		<ComponentGroup Id="StartMenuComponents">
+			<ComponentRef Id="StartMenuShortcuts"/>
+		</ComponentGroup>
+	</Fragment>
+	<!-- ── Configuration component ──────────────────────────── -->
+	<Fragment>
+		<DirectoryRef Id="AppDataMCPJungle">
+			<Component Id="MCPJungleSqliteDB"
+			           Guid="DE225E5D-B24F-4649-A15C-E7E4E1D69557"
+			           NeverOverwrite="yes">
+                <File Id="McpJungleDb"
+				      Name="mcpjungle.db"
+				      Source="$(ConfigDir)\mcpjungle.db" 
+                      KeyPath="yes" />
+				<RemoveFolder Id="RemoveAppDataMCPJungle"
+				              Directory="AppDataMCPJungle"
+				              On="uninstall"/>
+				<RemoveFolder Id="RemoveAppDataKonnek"
+				              Directory="AppDataKonnek"
+				              On="uninstall"/>
+			</Component>
+		</DirectoryRef>
+	</Fragment>
+    <!-- ── Configuration component ──────────────────────────── -->
+    <?if $(BuildType) = "User" ?>
+	<Fragment>
+		<DirectoryRef Id="UserProfileFolder">
+			<Component Id="McpJungleConfFile"
+			           Guid="CE7D9F8B-4D7A-4545-A041-68BDC26C0C16"
+			           NeverOverwrite="yes">
+                <File Id="McpJungleConf"
+				      Name=".mcpjungle.conf"
+				      Source="$(ConfigDir)\.mcpjungle.conf" 
+                      KeyPath="yes" />
+			</Component>
+		</DirectoryRef>
+	</Fragment>
+    <?endif ?>
+	<Fragment>
+		<ComponentGroup Id="ConfigComponents">
+			<ComponentRef Id="MCPJungleSqliteDB"/>
+            <?if $(BuildType) = "User" ?>
+            <ComponentRef Id="McpJungleConfFile"/>
+            <?endif ?>
+		</ComponentGroup>
+	</Fragment>
+</Wix>
