@@ -145,6 +145,8 @@
 						           Name="Programs">
 							<Directory Id="KonnekStartMenuDir"
 							           Name="Konnek"/>
+                            <Directory Id="StartProgramsDir"
+							           Name="Startup"/>
 						</Directory>
 					</Directory>
 				</Directory>
@@ -238,7 +240,7 @@
 				                Description="Runs MCPJungle in background mode"
 				                Type="ownProcess"
 				                Start="auto"
-                                Arguments="start --port 9000 --sqlite-db-path [AppDataMCPJungle]mcpjungle.db"
+                                Arguments="start --port 8080 --sqlite-db-path [AppDataMCPJungle]mcpjungle.db"
 				                ErrorControl="normal"
 				                Account="LocalSystem">
 					<util:ServiceConfig FirstFailureActionType="restart"
@@ -327,7 +329,7 @@
 				          Name="MCPJungle Gateway"
 				          Description="Launch MCPJungle Gateway"
 				          Target="[System64Folder]cmd.exe"
-                          Arguments="/k [INSTALLFOLDER]mcpjungle.exe start --port 9000 --sqlite-db-path [AppDataMCPJungle]mcpjungle.db"
+                          Arguments="/k [INSTALLFOLDER]mcpjungle.exe start --port 8080 --sqlite-db-path [AppDataMCPJungle]mcpjungle.db"
 				          WorkingDirectory="INSTALLFOLDER"
 				          Icon="McpJungleIcon" 
 						  IconIndex="0" />	  
