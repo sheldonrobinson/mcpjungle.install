@@ -135,7 +135,7 @@ jobs:
           Write-Host "Downloaded: $([math]::Round($size/1KB, 1)) KB"
           
           # clean target
-          if (Test-Path $targetFolder) { Remove-Item "$targetFolder\*" -Recurse -Force }
+          if (Test-Path $SourceDir) { Remove-Item "$SourceDir\*" -Recurse -Force }
           
           # Ensure target extract folder exists (clean if exists)
           if (Test-Path $SourceDir) { Remove-Item $SourceDir -Recurse -Force }
