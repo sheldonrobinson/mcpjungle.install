@@ -288,7 +288,7 @@
 			           Guid="84FC8DEA-EBA7-409E-8075-1CA5E7657C91">
 				<util:InternetShortcut Id="WebsiteStartMenuShortcut"
 				                       Name="MCPJungle Admin UI"
-				                       Target="http://localhost:9000/"
+				                       Target="http://localhost:8080/"
 				                       Type="url" />
 				<?if $(BuildType) = "System" ?>
 				<!-- Start LLM Proxy startmenu shortcut -->
