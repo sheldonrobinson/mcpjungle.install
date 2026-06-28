@@ -289,7 +289,9 @@
 				<util:InternetShortcut Id="WebsiteStartMenuShortcut"
 				                       Name="MCPJungle Admin UI"
 				                       Target="http://localhost:8080/"
-				                       Type="url" />
+				                       Type="url" 
+                                       Icon="StartIcon"
+                                       IconIndex="0"/>
 				<?if $(BuildType) = "System" ?>
 				<!-- Start LLM Proxy startmenu shortcut -->
 				<Shortcut Id="StartServiceStartMenuShortcut"
@@ -387,6 +389,21 @@
 				<RemoveFolder Id="RemoveAppDataKonnek"
 				              Directory="AppDataKonnek"
 				              On="uninstall"/>
+               <?if $(BuildType) = "Machine" ?>
+				<RegistryValue Root="HKLM"
+				               Key="SOFTWARE\Konnek\mcpjungle"
+				               Name="mcpjungledb"
+				               Type="string"
+				               Value="%PROGRAMDATA%\Konnek\mcpjungle\mcpjungle.db"
+				               KeyPath="yes"/>
+				<?else ?>
+				<RegistryValue Root="HKCU"
+				               Key="SOFTWARE\Konnek\mcpjungle"
+				               Name="mcpjungledb"
+				               Type="string"
+				               Value="%APPDATA%\Konnek\mcpjungle\mcpjungle.db"
+				               KeyPath="yes"/>
+				<?endif ?>
 			</Component>
 		</DirectoryRef>
 	</Fragment>
