@@ -290,7 +290,7 @@
 				                       Name="MCPJungle Admin UI"
 				                       Target="http://localhost:8080/"
 				                       Type="url" 
-                                       Icon="StartIcon"
+                                       IconFile="StartIcon"
                                        IconIndex="0"/>
 				<?if $(BuildType) = "System" ?>
 				<!-- Start LLM Proxy startmenu shortcut -->
