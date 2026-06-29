@@ -394,15 +394,13 @@
 				               Key="SOFTWARE\Konnek\mcpjungle"
 				               Name="mcpjungledb"
 				               Type="string"
-				               Value="%PROGRAMDATA%\Konnek\mcpjungle\mcpjungle.db"
-				               KeyPath="yes"/>
+				               Value="%PROGRAMDATA%\Konnek\mcpjungle\mcpjungle.db"/>
 				<?else ?>
 				<RegistryValue Root="HKCU"
 				               Key="SOFTWARE\Konnek\mcpjungle"
 				               Name="mcpjungledb"
 				               Type="string"
-				               Value="%APPDATA%\Konnek\mcpjungle\mcpjungle.db"
-				               KeyPath="yes"/>
+				               Value="%APPDATA%\Konnek\mcpjungle\mcpjungle.db"/>
 				<?endif ?>
 			</Component>
 		</DirectoryRef>
